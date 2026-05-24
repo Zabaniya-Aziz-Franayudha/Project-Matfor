@@ -13,27 +13,27 @@ centroids = np.array([[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
                       [3.0, 3.0, 3.0, 3.0, 3.0, 3.0], 
                       [5.0, 5.0, 5.0, 5.0, 5.0, 5.0]])
 
-iterasi = 0
+iterasi = 1
 max_iter = 100
 
 print("--- ISI SELURUH DATA MAHASISWA ---")
 print(df)
 
-print("--- ANALISIS K-MEANS LENGKAP ---")
+
+print("\n--- ANALISIS K-MEANS LENGKAP ---")
 while iterasi < max_iter:
     # A. Hitung jarak Euclidean
     jarak = cdist(data, centroids, metric='euclidean')
     labels = np.argmin(jarak, axis=1)
 
     # B. Tampilkan Output
-    print(f"\n{'='*80}")
     print(f"--- ITERASI {iterasi} ---")
 
     # 1. Posisi centroid saat ini
     print("\n[POSISI CENTROID]")
     df_centroid = pd.DataFrame(
         centroids,
-        index=['Mudah', 'Sedang', 'Sulit'],
+        index=['Cluster 1', 'Cluster 2', 'Cluster 3'],
         columns=['Matfor', 'Strukdat', 'Inggris',
                  'Litik', 'Pancasila', 'StraPem']
     )
@@ -42,22 +42,22 @@ while iterasi < max_iter:
     # 2. Detail jarak mahasiswa
     df_detail = pd.DataFrame(
         jarak,
-        columns=['Jarak_Mudah(1)',
-                 'Jarak_Sedang(3)',
-                 'Jarak_Sulit(5)']
+        columns=['Cluster 1',
+                 'Cluster 2',
+                 'Cluster 3']
     )
 
     df_detail.insert(0, 'Nama', nama)
 
     df_detail['Cluster'] = pd.Series(labels).replace({
-        0: 'Mudah',
-        1: 'Sedang',
-        2: 'Sulit'
+        0: 'Cluster 1',
+        1: 'Cluster 2',
+        2: 'Cluster 3'
     })
 
     # 3. Rekap jumlah mahasiswa
     rekap = df_detail['Cluster'].value_counts().reindex(
-        ['Mudah', 'Sedang', 'Sulit'],
+        ['Cluster 1', 'Cluster 2', 'Cluster 3'],
         fill_value=0
     )
 
@@ -81,13 +81,11 @@ while iterasi < max_iter:
     print("\n[CENTROID BARU]")
     df_new_centroid = pd.DataFrame(
         new_centroids,
-        index=['Mudah', 'Sedang', 'Sulit'],
+        index=['Cluster 1', 'Cluster 2', 'Cluster 3'],
         columns=['Matfor', 'Strukdat', 'Inggris',
                  'Litik', 'Pancasila', 'StraPem']
     )
     print(df_new_centroid.round(3).to_string())
-
-    print(f"{'='*80}")
 
     # E. Cek konvergensi
     if np.allclose(centroids, new_centroids):
@@ -97,11 +95,45 @@ while iterasi < max_iter:
     # F. Update centroid
     centroids = new_centroids
     iterasi += 1
-print("\n--- PROSES SELESAI ---")
 
+# Cari rata-rata tiap centroid
+rata_centroid = centroids.mean(axis=1)
+
+# Urutkan centroid dari kecil ke besar
+urutan = np.argsort(rata_centroid)
+
+# Mapping nama cluster
+mapping_nama = {
+    urutan[0]: 'Mudah',
+    urutan[1]: 'Sedang',
+    urutan[2]: 'Sulit'
+}
+
+# Tambahkan kategori
+df_detail['Kategori'] = [
+    mapping_nama[label]
+    for label in labels
+]
+
+# =========================
+# 5. HASIL AKHIR
+# =========================
 print("\n--- HASIL AKHIR CLUSTER ---")
-print(df_detail[['No', 'Nama', 'Cluster']].to_string(index=False))
+
+print(
+    df_detail[
+        ['No', 'Nama', 'Cluster', 'Kategori']
+    ].to_string(index=False)
+)
 
 print(f"\nTotal iterasi: {iterasi}")
+
+# Tambahkan ini di bawah "5. HASIL AKHIR"
+print("\n[REKAP JUMLAH MAHASISWA]")
+rekap_akhir = df_detail['Cluster'].value_counts().reindex(
+    ['Cluster 1', 'Cluster 2', 'Cluster 3'],
+    fill_value=0
+)
+print(rekap_akhir.to_string())
 
 print("\n--- PROSES SELESAI ---")
