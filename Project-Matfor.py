@@ -4,25 +4,24 @@ from scipy.spatial.distance import cdist
 
 # 1. MEMBACA DATA
 # Pastikan file nilaimahasiswa.csv ada di folder yang sama
-df = pd.read_csv('nilaimahasiswa.csv', sep=';', engine='python')
+df = pd.read_csv('Datamahasiswa.csv', sep=';', engine='python')
 data = df[['Matfor', 'Strukdat', 'Inggris', 'Litik', 'Pancasila', 'StraPem']].values
 nama = df['Nama'].values
 
-# 2. CENTROID AWAL (1, 3, 5)
-centroids = np.array([[1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 
-                      [3.0, 3.0, 3.0, 3.0, 3.0, 3.0], 
-                      [5.0, 5.0, 5.0, 5.0, 5.0, 5.0]])
-
+centroids = np.array([
+    [1.0, 5.0, 1.0, 3.0, 1.0, 2.0], # C1: Moh Raditya Ridwansyah
+    [4.0, 3.0, 3.0, 3.0, 3.0, 3.0], # C2: Anas
+    [3.0, 3.0, 5.0, 3.0, 5.0, 5.0]  # C3: Azka Ramadhan
+])
 iterasi = 1
 max_iter = 100
 
 print("--- ISI SELURUH DATA MAHASISWA ---")
 print(df)
 
-
 print("\n--- ANALISIS K-MEANS LENGKAP ---")
 while iterasi < max_iter:
-    # A. Hitung jarak Euclidean
+    # A. Hitung jarak  
     jarak = cdist(data, centroids, metric='euclidean')
     labels = np.argmin(jarak, axis=1)
 
@@ -33,13 +32,13 @@ while iterasi < max_iter:
     print("\n[POSISI CENTROID]")
     df_centroid = pd.DataFrame(
         centroids,
-        index=['Cluster 1', 'Cluster 2', 'Cluster 3'],
+        index=['Centeroid 1', 'Centeroid 2', 'Centeroid 3'],
         columns=['Matfor', 'Strukdat', 'Inggris',
                  'Litik', 'Pancasila', 'StraPem']
     )
     print(df_centroid.round(3).to_string())
 
-    # 2. Detail jarak mahasiswa
+
     df_detail = pd.DataFrame(
         jarak,
         columns=['Cluster 1',
@@ -77,7 +76,7 @@ while iterasi < max_iter:
         for i in range(len(centroids))
     ])
 
-    # D. Tampilkan centroid baru
+
     print("\n[CENTROID BARU]")
     df_new_centroid = pd.DataFrame(
         new_centroids,
@@ -87,16 +86,14 @@ while iterasi < max_iter:
     )
     print(df_new_centroid.round(3).to_string())
 
-    # E. Cek konvergensi
+
     if np.allclose(centroids, new_centroids):
         print(f"\n=> KONVERGEN pada iterasi ke-{iterasi}.")
         break
 
-    # F. Update centroid
     centroids = new_centroids
     iterasi += 1
 
-# Cari rata-rata tiap centroid
 rata_centroid = centroids.mean(axis=1)
 
 # Urutkan centroid dari kecil ke besar
@@ -115,9 +112,7 @@ df_detail['Kategori'] = [
     for label in labels
 ]
 
-# =========================
-# 5. HASIL AKHIR
-# =========================
+
 print("\n--- HASIL AKHIR CLUSTER ---")
 
 print(
@@ -128,7 +123,6 @@ print(
 
 print(f"\nTotal iterasi: {iterasi}")
 
-# Tambahkan ini di bawah "5. HASIL AKHIR"
 print("\n[REKAP JUMLAH MAHASISWA]")
 rekap_akhir = df_detail['Cluster'].value_counts().reindex(
     ['Cluster 1', 'Cluster 2', 'Cluster 3'],
