@@ -1,6 +1,6 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np 
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
@@ -45,7 +45,6 @@ centroids = [
 ]
 
 kluster=3
-
 iterasi = 1
 max_iter = 100
 
@@ -59,39 +58,32 @@ while iterasi <= max_iter:
     print("="*90)
 
     # =========================
-    # HITUNG JARAK (MANUAL TANPA MATH)
+    # HITUNG JARAK
     # =========================
     jarak = []
 
     for i in range(len(data)):
         row = []
-
         for c in centroids:
-
             total = 0
             for k in range(6):
                 selisih = data[i][k] - c[k]
                 total += selisih * selisih   # kuadrat
-
             jarak_akhir = total ** 0.5       # akar manual
             row.append(jarak_akhir)
-
         jarak.append(row)
 
     # =========================
     # CLUSTER
     # =========================
     labels = []
-
     for i in range(len(jarak)):
         min_val = jarak[i][0]
         cluster = 0
-
         for j in range(1, 3):
             if jarak[i][j] < min_val:
                 min_val = jarak[i][j]
                 cluster = j
-
         labels.append(cluster)
 
     # =========================
@@ -100,26 +92,19 @@ while iterasi <= max_iter:
     new_centroids = []
 
     for c in range(3):
-
         anggota = []
-
         for i in range(len(data)):
             if labels[i] == c:
                 anggota.append(data[i])
-
         if len(anggota) == 0:
             new_centroids.append(centroids[c])
             continue
-
         centroid_baru = []
-
         for k in range(6):
             total = 0
             for a in anggota:
                 total += a[k]
-
             centroid_baru.append(total / len(anggota))
-
         new_centroids.append(centroid_baru)
 
     # =========================
@@ -127,7 +112,6 @@ while iterasi <= max_iter:
     # =========================
     print("\n[POSISI CENTROID]")
     print("-"*90)
-
     for i in range(3):
         print(f"C{i+1} : ", end="")
         for v in centroids[i]:
@@ -139,7 +123,6 @@ while iterasi <= max_iter:
     # =========================
     print("\n[DETAIL JARAK & CLUSTER]")
     print("-"*90)
-
     print(f"{'No':<4}{'Nama':<28}{'C1':>10}{'C2':>10}{'C3':>10}{'Cluster':>10}")
     print("-"*90)
 
@@ -159,7 +142,6 @@ while iterasi <= max_iter:
     count = [0, 0, 0]
     for l in labels:
         count[l] += 1
-
     print("\n[REKAP CLUSTER]")
     print("-"*90)
     for i in range(3):
@@ -170,7 +152,6 @@ while iterasi <= max_iter:
     # =========================
     print("\n[CENTROID BARU]")
     print("-"*90)
-
     for i in range(3):
         print(f"C{i+1} : ", end="")
         for v in new_centroids[i]:
@@ -181,16 +162,13 @@ while iterasi <= max_iter:
     # KONVERGENSI
     # =========================
     sama = True
-
     for i in range(3):
         for j in range(6):
             if round(centroids[i][j], 4) != round(new_centroids[i][j], 4):
                 sama = False
-
     if sama:
         print("\n=> KONVERGENSI TERCAPAI")
         break
-
     centroids = new_centroids
     iterasi += 1
 
@@ -200,14 +178,12 @@ while iterasi <= max_iter:
 print("\n" + "="*90)
 print("HASIL AKHIR CLUSTERING")
 print("="*90)
-
 rata = []
 for c in centroids:
     total = 0
     for v in c:
         total += v
     rata.append(total / len(c))
-
 urutan = sorted(range(3), key=lambda i: rata[i])
 
 mapping = {
@@ -218,7 +194,6 @@ mapping = {
 
 print(f"{'No':<4}{'Nama':<28}{'Cluster':<10}{'Kategori'}")
 print("-"*90)
-
 for i in range(len(data)):
     print(
         f"{i+1:<4}"
@@ -226,7 +201,6 @@ for i in range(len(data)):
         f"C{labels[i]+1:<10}"
         f"{mapping[labels[i]]}"
     )
-
 print("-"*90)
 print(f"Total iterasi: {iterasi}")
 
@@ -243,7 +217,6 @@ def show_bar_chart(labels, mapping):
     plt.xlabel("Kategori")
     plt.ylabel("Jumlah Mahasiswa")
     plt.show()
-
 show_bar_chart(labels, mapping)
 
 # ==================================================
@@ -251,18 +224,15 @@ show_bar_chart(labels, mapping)
 # ==================================================
 
 def show_pca_plot(data, labels, mapping):
-    # Konversi data dan labels (numpy array)
+    # Konversi data dan labels ke format yang dimengerti sklearn (numpy array)
     data_array = np.array(data)
     labels_array = np.array(labels)
-    
     # PCA
     pca = PCA(n_components=2)
     data_pca = pca.fit_transform(data_array)
-    
     # Visualisasi
     plt.figure(figsize=(10, 6))
     colors = ['red', 'blue', 'green']
-    
     for i in range(3):
         # Menggunakan boolean indexing pada numpy array
         plt.scatter(data_pca[labels_array == i, 0], 
@@ -275,9 +245,9 @@ def show_pca_plot(data, labels, mapping):
     plt.legend()
     plt.grid(True)
     plt.show()
-
 # Panggil fungsi setelah loop K-Means
 show_pca_plot(data, labels, mapping)
+
 # ==================================================
 # FUNGSI: SILHOUETTE SCORE (TIAP & SELURUH)
 # ==================================================
@@ -290,14 +260,12 @@ def evaluasi_silhouette_manual(data, labels):
     
     for i in range(n):
         cluster_i = labels[i]
-        
         # Hitung a(i): jarak rata-rata ke anggota cluster sendiri
         anggota_i = [data[j] for j in range(n) if labels[j] == cluster_i]
         if len(anggota_i) > 1:
             a_i = sum(hitung_jarak(data[i], p) for p in anggota_i) / (len(anggota_i) - 1)
         else:
             a_i = 0
-            
         # Hitung b(i): jarak rata-rata terpendek ke cluster lain
         cluster_lain = [c for c in range(3) if c != cluster_i]
         b_i = float('inf')
@@ -325,11 +293,9 @@ sil_list = evaluasi_silhouette_manual(data, labels)
 cluster_groups = {0: [], 1: [], 2: []}
 for i in range(len(labels)):
     cluster_groups[labels[i]].append(sil_list[i])
-
 print("\n" + "="*50)
 print("EVALUASI SILHOUETTE SCORE")
 print("="*50)
-
 # Print Siluet tiap cluster
 for i in range(3):
     avg_c = sum(cluster_groups[i]) / len(cluster_groups[i]) if cluster_groups[i] else 0
@@ -340,3 +306,42 @@ total_avg = sum(sil_list) / len(sil_list)
 print("-" * 50)
 print(f"Rata-rata Siluet Keseluruhan: {total_avg:.4f}")
 print("="*50)
+
+# =========================
+# 1. DATA & PREPROCESSING
+# =========================
+df = pd.read_csv("Datamahasiswa.csv", sep=';')
+nama = df['Nama'].tolist()
+data = df.iloc[:, 1:].values.tolist()
+for i in range(len(data)):
+    for k in range(6):
+        data[i][k] = 3 if pd.isna(data[i][k]) else max(1, min(5, data[i][k]))
+
+# =========================
+# 2. K-MEANS MANUAL
+# =========================
+centroids = [[1,5,1,3,1,2], [4,3,3,3,3,3], [3,3,5,3,5,5]]
+for iterasi in range(1, 101):
+    labels = [min(range(3), key=lambda i: sum((data[j][k]-centroids[i][k])**2 for k in range(6))) for j in range(len(data))]
+    new_c = [[sum(col)/len(g) for col in zip(*g)] if (g := [data[j] for j, l in enumerate(labels) if l == i]) else centroids[i] for i in range(3)]
+    if all(round(centroids[i][k], 4) == round(new_c[i][k], 4) for i in range(3) for k in range(6)): break
+    centroids = new_c
+
+# =========================
+# PLOT DISTRIBUSI TIAP FITUR
+# =========================
+def plot_distribusi_per_fitur(data, labels):
+    fitur = ['Matfor', 'Strukdat', 'Inggris', 'Litik', 'Pancasila', 'StraPem']
+    fig, axes = plt.subplots(2, 3, figsize=(15, 8))
+    axes = axes.flatten()
+    for k in range(6):
+        for i in range(3):
+            nilai = [data[j][k] for j in range(len(labels)) if labels[j] == i]
+            axes[k].hist(nilai, bins=[0.5, 1.5, 2.5, 3.5, 4.5, 5.5], alpha=0.5, label=f"C{i+1}")
+        axes[k].set_title(fitur[k])
+        axes[k].legend()
+    plt.tight_layout()
+    plt.savefig("distribusi_fitur.png", dpi=300)
+    plt.show()
+
+plot_distribusi_per_fitur(data, labels)
