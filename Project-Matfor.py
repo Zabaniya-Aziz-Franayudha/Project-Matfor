@@ -1,4 +1,9 @@
+import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+
 
 # =========================
 # 1. DATA
@@ -18,6 +23,18 @@ for _, row in df.iterrows():
         row['StraPem']
     ])
 
+
+# TAMBAHAN PRAPROSES (Validasi & Pembersihan)
+for i in range(len(data)):
+    for k in range(len(data[i])):
+        # Mengatasi data jika ada yang kosong (isi dengan 3)
+        if pd.isna(data[i][k]):
+            data[i][k] = 3
+        # Memastikan data di range 1-5
+        if data[i][k] < 1: data[i][k] = 1
+        if data[i][k] > 5: data[i][k] = 5
+print("Data berhasil divalidasi ke rentang 1-5.")
+
 # =========================
 # 2. CENTROID AWAL
 # =========================
@@ -26,6 +43,8 @@ centroids = [
     [4, 3, 3, 3, 3, 3],
     [3, 3, 5, 3, 5, 5]
 ]
+
+kluster=3
 
 iterasi = 1
 max_iter = 100
@@ -210,3 +229,114 @@ for i in range(len(data)):
 
 print("-"*90)
 print(f"Total iterasi: {iterasi}")
+
+# ==================================================
+# VISUALISASI BAR CHART (Distribusi Cluster)
+# ==================================================
+def show_bar_chart(labels, mapping):
+    counts = [labels.count(i) for i in range(3)]
+    kategori = [mapping[i] for i in range(3)]
+    
+    plt.figure(figsize=(8, 5))
+    plt.bar(kategori, counts, color=['red', 'blue', 'green'])
+    plt.title("Distribusi Jumlah Mahasiswa per Cluster")
+    plt.xlabel("Kategori")
+    plt.ylabel("Jumlah Mahasiswa")
+    plt.show()
+
+show_bar_chart(labels, mapping)
+
+# ==================================================
+# VISUALISASI PCA (Reduksi Dimensi)
+# ==================================================
+
+def show_pca_plot(data, labels, mapping):
+    # Konversi data dan labels (numpy array)
+    data_array = np.array(data)
+    labels_array = np.array(labels)
+    
+    # PCA
+    pca = PCA(n_components=2)
+    data_pca = pca.fit_transform(data_array)
+    
+    # Visualisasi
+    plt.figure(figsize=(10, 6))
+    colors = ['red', 'blue', 'green']
+    
+    for i in range(3):
+        # Menggunakan boolean indexing pada numpy array
+        plt.scatter(data_pca[labels_array == i, 0], 
+                    data_pca[labels_array == i, 1], 
+                    c=colors[i], label=mapping[i], s=80, alpha=0.7)
+    
+    plt.title("Visualisasi PCA (Reduksi 6 Dimensi ke 2D)")
+    plt.xlabel("Principal Component 1")
+    plt.ylabel("Principal Component 2")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+# Panggil fungsi setelah loop K-Means
+show_pca_plot(data, labels, mapping)
+# ==================================================
+# FUNGSI: SILHOUETTE SCORE (TIAP & SELURUH)
+# ==================================================
+def hitung_jarak(p1, p2):
+    return sum((a - b)**2 for a, b in zip(p1, p2))**0.5
+
+def evaluasi_silhouette_manual(data, labels):
+    n = len(data)
+    sil_scores = []
+    
+    for i in range(n):
+        cluster_i = labels[i]
+        
+        # Hitung a(i): jarak rata-rata ke anggota cluster sendiri
+        anggota_i = [data[j] for j in range(n) if labels[j] == cluster_i]
+        if len(anggota_i) > 1:
+            a_i = sum(hitung_jarak(data[i], p) for p in anggota_i) / (len(anggota_i) - 1)
+        else:
+            a_i = 0
+            
+        # Hitung b(i): jarak rata-rata terpendek ke cluster lain
+        cluster_lain = [c for c in range(3) if c != cluster_i]
+        b_i = float('inf')
+        for c in cluster_lain:
+            anggota_c = [data[j] for j in range(n) if labels[j] == c]
+            if len(anggota_c) > 0:
+                dist = sum(hitung_jarak(data[i], p) for p in anggota_c) / len(anggota_c)
+                if dist < b_i:
+                    b_i = dist
+        
+        # Hitung s(i)
+        if max(a_i, b_i) == 0:
+            sil_scores.append(0)
+        else:
+            sil_scores.append((b_i - a_i) / max(a_i, b_i))
+            
+    return sil_scores
+
+# ==================================================
+# IMPLEMENTASI EVALUASI
+# ==================================================
+sil_list = evaluasi_silhouette_manual(data, labels)
+
+# Mengelompokkan skor siluet berdasarkan cluster
+cluster_groups = {0: [], 1: [], 2: []}
+for i in range(len(labels)):
+    cluster_groups[labels[i]].append(sil_list[i])
+
+print("\n" + "="*50)
+print("EVALUASI SILHOUETTE SCORE")
+print("="*50)
+
+# Print Siluet tiap cluster
+for i in range(3):
+    avg_c = sum(cluster_groups[i]) / len(cluster_groups[i]) if cluster_groups[i] else 0
+    print(f"Cluster {i+1} ({mapping[i]}): {avg_c:.4f}")
+
+# Print Siluet seluruh data
+total_avg = sum(sil_list) / len(sil_list)
+print("-" * 50)
+print(f"Rata-rata Siluet Keseluruhan: {total_avg:.4f}")
+print("="*50)
